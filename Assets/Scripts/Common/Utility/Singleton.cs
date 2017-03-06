@@ -1,40 +1,36 @@
 ﻿using System;
+using UnityEngine;
 
-public abstract class Singleton<T> where T : class,new()
+#if UNITY_EDITOR
+public abstract class Singleton<T> : BaseManager where T : MonoBehaviour
+#else
+public abstract class Singleton<T> : BaseManager where T : class, new()
+#endif
 {
 	private static T _instance;
 
-	public static T GetInstance()
+	public static T GetInstance ()
 	{
-		if(_instance == null)
-		{
+		if (_instance == null) {
+
+			#if UNITY_EDITOR
+			_instance = GetInstanceInEditor ();
+			#else
 			_instance = new T ();
+			#endif
 		}
 		return _instance;
 	}
 
-	/// <summary>
-	/// 初始化；
-	/// </summary>
-	public abstract void Init ();
-
-	/// <summary>
-	/// 逻辑更新；
-	/// </summary>
-	/// <param name="time">Time.</param>
-	public virtual void Update(float time)
+	private static T GetInstanceInEditor ()
 	{
-		
+		GameObject root = new GameObject (typeof(T).Name);
+		Transform tran = root.transform;
+		tran.localPosition = Vector3.zero;
+		tran.localRotation = Vector3.zero;
+		tran.localScale = Vector3.one;
+		DontDestroyOnLoad (root);
+		return root.AddComponent<T> ();
 	}
-
-	/// <summary>
-	/// 处理游戏断线重连；
-	/// </summary>
-	public abstract void Reconnect ();
-
-	/// <summary>
-	/// 清理单例中的数据；
-	/// </summary>
-	public abstract void Clear ();
 
 }
