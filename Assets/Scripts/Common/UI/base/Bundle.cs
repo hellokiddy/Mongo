@@ -12,6 +12,13 @@ namespace Mongo.Common.UI
 			mBundleArgs = new Dictionary<string, object> ();
 		}
 
+		public void Reset ()
+		{
+			if (mBundleArgs != null) {
+				mBundleArgs.Clear ();
+			}
+		}
+
 		public int getArgsCount ()
 		{
 			if (mBundleArgs == null) {
