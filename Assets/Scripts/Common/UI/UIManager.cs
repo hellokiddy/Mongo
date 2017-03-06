@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Mongo.Common.Utility;
 
-namespace Honor.Common.UI
+namespace Mongo.Common.UI
 {
 	/// <summary>
 	/// UI管理
@@ -11,43 +12,30 @@ namespace Honor.Common.UI
 	/// 3.UI回退处理；
 	/// 4.UI自动销毁；
 	/// </summary>
-	public class UIManager : MonoSingleton<UIManager> 
+	public class UIManager : Singleton<UIManager>
 	{
 		private Dictionary<int,object> mPanelStacks;
 
 		#region Override
-		protected override void Init()
+
+		public override void Init ()
 		{
 			mPanelStacks = new Dictionary<int, object> ();
 		}
 
-		protected override void OnUpdate(float time)
-		{
-			
-		}
-
-		public override void Reconnect()
-		{
-			
-		}
-
-		public override void Clear()
-		{
-			
-		}
 		#endregion
 
-		public void ShowPanel(int id,Bundle args)
+		public void ShowPanel (int id, Bundle args)
 		{
 			
 		}
 
-		private void PreLoadPanel()
+		private void PreLoadPanel ()
 		{
 			
 		}
 
-		private void LoadPanel()
+		private void LoadPanel ()
 		{
 			
 		}

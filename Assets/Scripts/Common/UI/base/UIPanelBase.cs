@@ -4,36 +4,43 @@ using UnityEngine;
 
 /// <summary>
 /// User interface panel base.
-/// 
+///
 /// UIPanelBase LiftCycle:
 /// 							  loop
 /// 					-----------<<-------------
 /// 					|                        |
-/// 					V                        | 
+/// 					V                        |
 /// OnCreate() ------> OnShow(Bundle) ------> OnClose() ------> OnDestroy()
-/// 
+///
 /// </summary>
 
-namespace Honor.Common.UI
+namespace Mongo.Common.UI
 {
-	public abstract class UIPanelBase : MonoBehaviour 
+	public abstract class UIPanelBase : MonoBehaviour
 	{
 
 		// Use this for initialization
-		void Start () {
+		void Start ()
+		{
 
 		}
 
 		// Update is called once per frame
-		void Update () {
+		void Update ()
+		{
 
 		}
 
 		#region Abstract
+
 		public abstract void OnCreate ();
+
 		public abstract void OnShow (Bundle saveInstance);
+
 		public abstract void OnClose ();
-		public abstract void OnDestroy();
+
+		public abstract void OnDestroy ();
+
 		#endregion
 	}
 }

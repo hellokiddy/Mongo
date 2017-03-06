@@ -1,12 +1,12 @@
 using System;
 
-namespace Mango.Common.Net
+namespace Mongo.Common.Net
 {
-    public enum MessageType
-    {
-        MSG_REQUEST = 0,
-        MSG_NOTIFY = 1,
-        MSG_RESPONSE = 2,
-        MSG_PUSH = 3
-    }
+	public enum MessageType
+	{
+		MSG_REQUEST = 0,
+		MSG_NOTIFY = 1,
+		MSG_RESPONSE = 2,
+		MSG_PUSH = 3
+	}
 }

@@ -2,180 +2,174 @@ using System;
 using SimpleJson;
 using System.Text;
 
-namespace Mango.Common.Net
+namespace Mongo.Common.Net
 {
-    public class Protocol
-    {
-        private MessageProtocol messageProtocol;
-        private ProtocolState state;
-        private Transporter transporter;
-        private HandShakeService handshake;
-        private HeartBeatService heartBeatService = null;
-		private MangoClient mc;
+	public class Protocol
+	{
+		private MessageProtocol messageProtocol;
+		private ProtocolState state;
+		private Transporter transporter;
+		private HandShakeService handshake;
+		private HeartBeatService heartBeatService = null;
+		private MongoClient mc;
 
-        public MangoClient getPomeloClient()
-        {
-            return this.mc;
-        }
+		public MongoClient getPomeloClient ()
+		{
+			return this.mc;
+		}
 
-        public Protocol(MangoClient mc, System.Net.Sockets.Socket socket)
-        {
-            this.mc = mc;
-            this.transporter = new Transporter(socket, this.processMessage);
-            this.transporter.onDisconnect = onDisconnect;
+		public Protocol (MongoClient mc, System.Net.Sockets.Socket socket)
+		{
+			this.mc = mc;
+			this.transporter = new Transporter (socket, this.processMessage);
+			this.transporter.onDisconnect = onDisconnect;
 
-            this.handshake = new HandShakeService(this);
-            this.state = ProtocolState.start;
-        }
+			this.handshake = new HandShakeService (this);
+			this.state = ProtocolState.start;
+		}
 
-        internal void start(JsonObject user, Action<JsonObject> callback)
-        {
-            this.transporter.start();
-            this.handshake.request(user, callback);
+		internal void start (JsonObject user, Action<JsonObject> callback)
+		{
+			this.transporter.start ();
+			this.handshake.request (user, callback);
 
-            this.state = ProtocolState.handshaking;
-        }
+			this.state = ProtocolState.handshaking;
+		}
 
-        //Send notify, do not need id
-        internal void send(string route, JsonObject msg)
-        {
-            send(route, 0, msg);
-        }
+		//Send notify, do not need id
+		internal void send (string route, JsonObject msg)
+		{
+			send (route, 0, msg);
+		}
 
-        //Send request, user request id 
-        internal void send(string route, uint id, JsonObject msg)
-        {
-            if (this.state != ProtocolState.working) 
+		//Send request, user request id
+		internal void send (string route, uint id, JsonObject msg)
+		{
+			if (this.state != ProtocolState.working)
 				return;
 
-            byte[] body = messageProtocol.encode(route, id, msg);
+			byte[] body = messageProtocol.encode (route, id, msg);
 
-            send(PackageType.PKG_DATA, body);
-        }
+			send (PackageType.PKG_DATA, body);
+		}
 
-        internal void send(PackageType type)
-        {
-            if (this.state == ProtocolState.closed) 
+		internal void send (PackageType type)
+		{
+			if (this.state == ProtocolState.closed)
 				return;
-            transporter.send(PackageProtocol.encode(type));
-        }
+			transporter.send (PackageProtocol.encode (type));
+		}
 
-        //Send system message, these message do not use messageProtocol
-        internal void send(PackageType type, JsonObject msg)
-        {
-            //This method only used to send system package
-            if (type == PackageType.PKG_DATA) 
-				return;
-
-            byte[] body = Encoding.UTF8.GetBytes(msg.ToString());
-
-            send(type, body);
-        }
-
-        //Send message use the transporter
-        internal void send(PackageType type, byte[] body)
-        {
-            if (this.state == ProtocolState.closed) 
+		//Send system message, these message do not use messageProtocol
+		internal void send (PackageType type, JsonObject msg)
+		{
+			//This method only used to send system package
+			if (type == PackageType.PKG_DATA)
 				return;
 
-            byte[] pkg = PackageProtocol.encode(type, body);
+			byte[] body = Encoding.UTF8.GetBytes (msg.ToString ());
 
-            transporter.send(pkg);
-        }
+			send (type, body);
+		}
 
-        //Invoke by Transporter, process the message
-        internal void processMessage(byte[] bytes)
-        {
-            Package pkg = PackageProtocol.decode(bytes);
+		//Send message use the transporter
+		internal void send (PackageType type, byte[] body)
+		{
+			if (this.state == ProtocolState.closed)
+				return;
 
-            //Ignore all the message except handshading at handshake stage
-            if (pkg.type == PackageType.PKG_HANDSHAKE && this.state == ProtocolState.handshaking)
-            {
+			byte[] pkg = PackageProtocol.encode (type, body);
 
-                //Ignore all the message except handshading
-                JsonObject data = (JsonObject)SimpleJson.SimpleJson.DeserializeObject(Encoding.UTF8.GetString(pkg.body));
+			transporter.send (pkg);
+		}
 
-                processHandshakeData(data);
+		//Invoke by Transporter, process the message
+		internal void processMessage (byte[] bytes)
+		{
+			Package pkg = PackageProtocol.decode (bytes);
 
-                this.state = ProtocolState.working;
+			//Ignore all the message except handshading at handshake stage
+			if (pkg.type == PackageType.PKG_HANDSHAKE && this.state == ProtocolState.handshaking) {
 
-            }
-            else if (pkg.type == PackageType.PKG_HEARTBEAT && this.state == ProtocolState.working)
-            {
-                this.heartBeatService.resetTimeout();
-            }
-            else if (pkg.type == PackageType.PKG_DATA && this.state == ProtocolState.working)
-            {
-                this.heartBeatService.resetTimeout();
-                mc.processMessage(messageProtocol.decode(pkg.body));
-            }
-            else if (pkg.type == PackageType.PKG_KICK)
-            {
-                this.getPomeloClient().Disconnect();
-                this.close();
-            }
-        }
+				//Ignore all the message except handshading
+				JsonObject data = (JsonObject)SimpleJson.SimpleJson.DeserializeObject (Encoding.UTF8.GetString (pkg.body));
 
-        private void processHandshakeData(JsonObject msg)
-        {
-            //Handshake error
-            if (!msg.ContainsKey("code") || !msg.ContainsKey("sys") || Convert.ToInt32(msg["code"]) != 200)
-            {
-                throw new Exception("Handshake error! Please check your handshake config.");
-            }
+				processHandshakeData (data);
 
-            //Set compress data
-            JsonObject sys = (JsonObject)msg["sys"];
+				this.state = ProtocolState.working;
 
-            JsonObject dict = new JsonObject();
-            if (sys.ContainsKey("dict")) dict = (JsonObject)sys["dict"];
+			} else if (pkg.type == PackageType.PKG_HEARTBEAT && this.state == ProtocolState.working) {
+				this.heartBeatService.resetTimeout ();
+			} else if (pkg.type == PackageType.PKG_DATA && this.state == ProtocolState.working) {
+				this.heartBeatService.resetTimeout ();
+				mc.processMessage (messageProtocol.decode (pkg.body));
+			} else if (pkg.type == PackageType.PKG_KICK) {
+				this.getPomeloClient ().Disconnect ();
+				this.close ();
+			}
+		}
 
-            JsonObject protos = new JsonObject();
-            JsonObject serverProtos = new JsonObject();
-            JsonObject clientProtos = new JsonObject();
+		private void processHandshakeData (JsonObject msg)
+		{
+			//Handshake error
+			if (!msg.ContainsKey ("code") || !msg.ContainsKey ("sys") || Convert.ToInt32 (msg ["code"]) != 200) {
+				throw new Exception ("Handshake error! Please check your handshake config.");
+			}
 
-            if (sys.ContainsKey("protos"))
-            {
-                protos = (JsonObject)sys["protos"];
-                serverProtos = (JsonObject)protos["server"];
-                clientProtos = (JsonObject)protos["client"];
-            }
+			//Set compress data
+			JsonObject sys = (JsonObject)msg ["sys"];
 
-            messageProtocol = new MessageProtocol(dict, serverProtos, clientProtos);
+			JsonObject dict = new JsonObject ();
+			if (sys.ContainsKey ("dict"))
+				dict = (JsonObject)sys ["dict"];
 
-            //Init heartbeat service
-            int interval = 0;
-            if (sys.ContainsKey("heartbeat")) interval = Convert.ToInt32(sys["heartbeat"]);
-            heartBeatService = new HeartBeatService(interval, this);
+			JsonObject protos = new JsonObject ();
+			JsonObject serverProtos = new JsonObject ();
+			JsonObject clientProtos = new JsonObject ();
 
-            if (interval > 0)
-            {
-                heartBeatService.start();
-            }
+			if (sys.ContainsKey ("protos")) {
+				protos = (JsonObject)sys ["protos"];
+				serverProtos = (JsonObject)protos ["server"];
+				clientProtos = (JsonObject)protos ["client"];
+			}
 
-            //send ack and change protocol state
-            handshake.ack();
-            this.state = ProtocolState.working;
+			messageProtocol = new MessageProtocol (dict, serverProtos, clientProtos);
 
-            //Invoke handshake callback
-            JsonObject user = new JsonObject();
-            if (msg.ContainsKey("user")) user = (JsonObject)msg["user"];
-            handshake.invokeCallback(user);
-        }
+			//Init heartbeat service
+			int interval = 0;
+			if (sys.ContainsKey ("heartbeat"))
+				interval = Convert.ToInt32 (sys ["heartbeat"]);
+			heartBeatService = new HeartBeatService (interval, this);
 
-        //The socket disconnect
-        private void onDisconnect()
-        {
-            this.mc.Disconnect();
-        }
+			if (interval > 0) {
+				heartBeatService.start ();
+			}
 
-        internal void close()
-        {
-            transporter.close();
+			//send ack and change protocol state
+			handshake.ack ();
+			this.state = ProtocolState.working;
 
-            if (heartBeatService != null) heartBeatService.stop();
+			//Invoke handshake callback
+			JsonObject user = new JsonObject ();
+			if (msg.ContainsKey ("user"))
+				user = (JsonObject)msg ["user"];
+			handshake.invokeCallback (user);
+		}
 
-            this.state = ProtocolState.closed;
-        }
-    }
+		//The socket disconnect
+		private void onDisconnect ()
+		{
+			this.mc.Disconnect ();
+		}
+
+		internal void close ()
+		{
+			transporter.close ();
+
+			if (heartBeatService != null)
+				heartBeatService.stop ();
+
+			this.state = ProtocolState.closed;
+		}
+	}
 }

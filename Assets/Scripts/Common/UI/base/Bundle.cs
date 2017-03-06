@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Honor.Common.UI
+namespace Mongo.Common.UI
 {
 	public class Bundle
 	{
@@ -12,84 +12,82 @@ namespace Honor.Common.UI
 			mBundleArgs = new Dictionary<string, object> ();
 		}
 
-		public int getArgsCount()
+		public int getArgsCount ()
 		{
-			if(mBundleArgs == null)
-			{
+			if (mBundleArgs == null) {
 				return 0;
 			}
 			return mBundleArgs.Count;
 		}
 
-		public bool putInt(string key,int value)
+		public bool putInt (string key, int value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public int getInt(string key)
+		public int getInt (string key)
 		{
 			return GetBundleArgs<int> (key);
 		}
 
-		public bool putFloat(string key,float value)
+		public bool putFloat (string key, float value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public float getFloat(string key)
+		public float getFloat (string key)
 		{
 			return GetBundleArgs<float> (key);
 		}
 
-		public bool putDouble(string key,double value)
+		public bool putDouble (string key, double value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public double getDouble(string key)
+		public double getDouble (string key)
 		{
 			return GetBundleArgs<double> (key);
 		}
 
-		public bool putBool(string key,bool value)
+		public bool putBool (string key, bool value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public bool getBool(string key)
+		public bool getBool (string key)
 		{
 			return GetBundleArgs<bool> (key);
 		}
 
-		public bool putString(string key,string value)
+		public bool putString (string key, string value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public string getString(string key)
+		public string getString (string key)
 		{
 			return GetBundleArgs<string> (key);
 		}
 
-		public bool AddBundleArgs(string key,object value)
+		public bool AddBundleArgs (string key, object value)
 		{
-			if(mBundleArgs.ContainsKey(key))
-			{
+			if (mBundleArgs.ContainsKey (key)) {
 				return false;
 			}
 			mBundleArgs.Add (key, value);
 			return true;
 		}
 
-		public T GetBundleArgs<T>(string key)
+		public T GetBundleArgs<T> (string key)
 		{
 			object value;
-			if(mBundleArgs.TryGetValue(key,out value))
-			{
+			if (mBundleArgs.TryGetValue (key, out value)) {
 				mBundleArgs.Remove (key);
 				return (T)value;
 			}
-			return default(T);;
+			return default(T);
+			;
 		}
 	}
 }
