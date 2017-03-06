@@ -27,7 +27,7 @@ public abstract class Singleton<T> : BaseManager where T : class, new()
 		GameObject root = new GameObject (typeof(T).Name);
 		Transform tran = root.transform;
 		tran.localPosition = Vector3.zero;
-		tran.localRotation = Vector3.zero;
+		tran.localRotation = Quaternion.identity;
 		tran.localScale = Vector3.one;
 		DontDestroyOnLoad (root);
 		return root.AddComponent<T> ();
