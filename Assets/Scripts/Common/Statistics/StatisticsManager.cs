@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Mongo.Common.Utility;
 using Mongo.Common.Event;
+using System.Text;
 
 namespace Mongo.Common.Statistics
 {
 	public class StatisticsManager : Singleton<StatisticsManager>
 	{
+		private static StringBuilder sBuilder = new StringBuilder ();
+
 		/// <summary>
 		/// the fps value.
 		/// </summary>
@@ -61,6 +64,26 @@ namespace Mongo.Common.Statistics
 		private void UpdateMemorySize ()
 		{
 			
+		}
+
+		public void Statistice (string tag)
+		{
+			sBuilder.Length = 0;
+			sBuilder.AppendFormat ("========== Statistics Report  Time:{0} Tag:{1} ==========\n", "2017-03-07 02:26:40", tag);
+			sBuilder.AppendLine ();
+
+			sBuilder.Append ("Pool Size:\n");
+			sBuilder.AppendFormat ("Bundle Pool Size:{0}\n", mMaxBundleSize);
+			sBuilder.AppendFormat ("Event Pool Size:{0}\n", mMaxEventSize);
+			sBuilder.AppendLine ();
+
+			sBuilder.Append ("Memory Size:\n");
+			sBuilder.AppendFormat ("Heap Memory Size:{0}\n", mHeapMemorySize);
+			sBuilder.AppendFormat ("Native Memory Size:{0}\n", mNativeMemorySize);
+			sBuilder.AppendLine ();
+
+			sBuilder.AppendFormat ("========== Statistics end ==========");
+			Debug.Log (sBuilder.ToString ());
 		}
 
 	}
