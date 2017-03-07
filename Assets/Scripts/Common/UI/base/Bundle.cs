@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Mongo.Common.UI
+namespace Mongo.Common.Utility
 {
 	public class Bundle
 	{
@@ -19,7 +19,7 @@ namespace Mongo.Common.UI
 			}
 		}
 
-		public int getArgsCount ()
+		public int GetArgsCount ()
 		{
 			if (mBundleArgs == null) {
 				return 0;
@@ -27,52 +27,52 @@ namespace Mongo.Common.UI
 			return mBundleArgs.Count;
 		}
 
-		public bool putInt (string key, int value)
+		public bool PutInt (string key, int value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public int getInt (string key)
+		public int GetInt (string key)
 		{
 			return GetBundleArgs<int> (key);
 		}
 
-		public bool putFloat (string key, float value)
+		public bool PutFloat (string key, float value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public float getFloat (string key)
+		public float GetFloat (string key)
 		{
 			return GetBundleArgs<float> (key);
 		}
 
-		public bool putDouble (string key, double value)
+		public bool PutDouble (string key, double value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public double getDouble (string key)
+		public double GetDouble (string key)
 		{
 			return GetBundleArgs<double> (key);
 		}
 
-		public bool putBool (string key, bool value)
+		public bool PutBool (string key, bool value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public bool getBool (string key)
+		public bool GetBool (string key)
 		{
 			return GetBundleArgs<bool> (key);
 		}
 
-		public bool putString (string key, string value)
+		public bool PutString (string key, string value)
 		{
 			return AddBundleArgs (key, value);
 		}
 
-		public string getString (string key)
+		public string GetString (string key)
 		{
 			return GetBundleArgs<string> (key);
 		}
@@ -94,8 +94,41 @@ namespace Mongo.Common.UI
 				return (T)value;
 			}
 			return default(T);
-			;
 		}
+
+		#region Bundle Pool
+
+		private static ObjectPool<Bundle> sBundlePool = new ObjectPool<Bundle> (20, 10);
+
+		public static int GetBundlePoolCount ()
+		{
+			return sBundlePool.Length;
+		}
+
+		public static Bundle Allocate ()
+		{
+			//grab the next available object.
+			Bundle instance = sBundlePool.Allocate ();
+			if (instance == null) {
+				instance = new Bundle ();
+			}
+			return instance;
+		}
+
+		public static void Release (Bundle instance)
+		{
+			if (instance == null) {
+				return;
+			}
+
+			//reset it.
+			instance.Reset ();
+
+			//make it available to others.
+			sBundlePool.Release (instance);
+		}
+
+		#endregion
 	}
 }
 

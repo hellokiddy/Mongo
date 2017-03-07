@@ -17,8 +17,9 @@ namespace Mongo.Common.Utility
 		/// <summary>
 		/// Update this instance.
 		/// </summary>
-		public virtual  void Update ()
+		public virtual  void OnUpdate (float deltaTime)
 		{
+			
 		}
 
 		/// <summary>

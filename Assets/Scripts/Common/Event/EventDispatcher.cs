@@ -5,74 +5,102 @@ using Mongo.Common.Utility;
 
 namespace Mongo.Common.Event
 {
-	public delegate void EventDelegate (IEvent eve);
+	public delegate void EventHandler (IEvent eve);
 
 	public class EventDispatcher : Singleton<EventDispatcher>
 	{
-		private List<IEvent> mEventCache = null;
-		private List<IEvent> mProcessEvents = null;
-		private Dictionary<int,List<EventDelegate>> mEventFuncDict = null;
+		#region Var
+
+		private List<IEvent> mEvents = null;
+		private Dictionary<int,List<EventHandler>> mEventHandlers = null;
+
+		#endregion
+
+		#region Override
 
 		public override void Init ()
 		{
-			mEventCache = new List<IEvent> ();
-			mProcessEvents = new List<IEvent> ();
-			mEventFuncDict = new Dictionary<int, List<EventDelegate>> ();
+			mEvents = new List<IEvent> ();
+			mEventHandlers = new Dictionary<int, List<EventHandler>> ();
 		}
 
-		public override void Update ()
+		public override void OnUpdate (float deltaTime)
 		{
-			base.Update ();
-			if (mProcessEvents == null || mProcessEvents.Count < 1) {
+			base.OnUpdate (deltaTime);
+			if (mEvents == null || mEvents.Count < 1) {
 				return;
 			}
-			float ftime = UnityEngine.Time.time;
-			for (int i = 0; i < mProcessEvents.Count;) {
-				IEvent eve = mProcessEvents [i];
+
+			for (int i = 0; i < mEvents.Count;) {
+				IEvent eve = mEvents [i];
 				if (eve == null) {
-					mProcessEvents.RemoveAt (i);
+					mEvents.RemoveAt (i);
 					continue;
 				}
-				if (ftime < eve.timeLock) {
+				eve.Delay -= deltaTime;
+				if (eve.Delay > 0) {
 					i++;
 					continue;
 				}
 				ActionEvent (eve);
-				mProcessEvents.RemoveAt (i);
+				mEvents.RemoveAt (i);
 			}
 
 		}
 
-		public IEvent PushEvent (int eventId, bool immediately = false)
+		#endregion
+
+		#region Interface
+
+		public void PushEvent (int eventId)
 		{
-			IEvent eve = GetEventFromCache (eventId);
+			PushEvent (eventId, true, 0f, null);
+		}
+
+		public void PushEvent (int eventId, bool immediately)
+		{
+			PushEvent (eventId, immediately, 0f, null);
+		}
+
+		public void PushEvent (int eventId, bool immediately, float delay)
+		{
+			PushEvent (eventId, immediately, delay, null);
+		}
+
+		public void PushEvent (int eventId, bool immediately, float delay, Bundle args)
+		{
+			IEvent eve = GameEvent.Allocate ();
+			eve.EventID = eventId;
+			eve.EventArgs = args;
+			eve.Delay = delay;
+
 			if (immediately) {
 				ActionEvent (eve);
+			} else {
+				mEvents.Add (eve);
 			}
-			mProcessEvents.Add (eve);
-			return eve;
 		}
 
-		public void RegisterEvent (int eventId, EventDelegate func)
+		public void AddListener (int eventId, EventHandler func)
 		{
 			if (func == null) {
 				return;
 			}
 
-			List<EventDelegate> funcList = GetFuncList (eventId);
+			List<EventHandler> funcList = GetFuncList (eventId);
 			if (!funcList.Contains (func)) {
 				funcList.Add (func);
 			}
 		}
 
-		public void UnRegisterEvent (int eventId, EventDelegate func)
+		public void RemoveListener (int eventId, EventHandler func)
 		{
 			if (func == null) {
 				return;
 			}
 
-			List<EventDelegate> funcList;
-			if (!mEventFuncDict.TryGetValue (eventId, out funcList)) {
+			List<EventHandler> funcList;
+			if (!mEventHandlers.TryGetValue (eventId, out funcList)) {
 				return;
 			}
 
@@ -84,61 +112,43 @@ namespace Mongo.Common.Event
 			}
 		}
 
+		#endregion
+
+		#region Internal
 
 		private void ActionEvent (IEvent eve)
 		{
 			if (eve == null) {
 				return;
 			}
-			List<EventDelegate> funcList = GetFuncList (eve.eventId);
+
+			List<EventHandler> funcList = GetFuncList (eve.EventID);
 			for (int i = 0; i < funcList.Count; i++) {
-				EventDelegate func = funcList [i];
+				EventHandler func = funcList [i];
 				if (func == null) {
 					continue;
 				}
 				try {
 					func (eve);
 				} catch (Exception ex) {
-					UnityEngine.Debug.LogError (string.Format ("{0} ----> {1} ---->{2} ----->{3}", eve.eventId, func.Target,
+					UnityEngine.Debug.LogError (string.Format ("{0} ----> {1} ---->{2} ----->{3}", eve.EventID, func.Target,
 						func.Method != null ? func.Method.Name : "NULL", ex.ToString ()));
 				}
 			}
-			AddEvent2Cache (eve);
+			GameEvent.Release (eve);
 		}
 
-		private void AddEvent2Cache (IEvent eve)
+		private List<EventHandler> GetFuncList (int eventId)
 		{
-			if (eve == null) {
-				return;
-			}
-			eve.Reset ();
-			if (mEventCache.Contains (eve)) {
-				mEventCache.Add (eve);
-			}
-		}
-
-		private IEvent GetEventFromCache (int eventId)
-		{
-			IEvent eve = null;
-			if (mEventCache.Count > 0) {
-				eve = mEventCache [0];
-				mEventCache.RemoveAt (0);
-			} else {
-				eve = new IEvent ();
-			}
-			eve.eventId = eventId;
-			return eve;
-		}
-
-		private List<EventDelegate> GetFuncList (int eventId)
-		{
-			List<EventDelegate> funcList = null;
-			if (!mEventFuncDict.TryGetValue (eventId, out funcList)) {
-				funcList = new List<EventDelegate> ();
-				mEventFuncDict.Add (eventId, funcList);
+			List<EventHandler> funcList = null;
+			if (!mEventHandlers.TryGetValue (eventId, out funcList)) {
+				funcList = new List<EventHandler> ();
+				mEventHandlers.Add (eventId, funcList);
 			}
 			return funcList;
 		}
+
+		#endregion
 	}
 }
 
