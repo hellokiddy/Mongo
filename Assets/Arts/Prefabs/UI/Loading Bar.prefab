@@ -209,11 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 149f64a0af80ec54ab1bc183b5860b78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_EffectColor:
-    r: 0.105882354
-    g: 0.07450981
-    b: 0.05882353
-    a: 0.7490196
+  m_EffectColor: {r: 0.105882354, g: 0.07450981, b: 0.05882353, a: 0.7490196}
   m_EffectDistance: {x: 3, y: -3}
   m_UseGraphicAlpha: 1
 --- !u!114 &11479500
@@ -239,7 +235,8 @@ MonoBehaviour:
   m_OnChange:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: 556e697479456e67696e652e55492e55494c6f6164696e674261722b4f6e4368616e67654576656e742c20417373656d626c792d4353686172702c2056657273696f6e3d302e302e302e302c2043756c747572653d6e65757472616c2c205075626c69634b6579546f6b656e3d6e756c6c
+    m_TypeName: UnityEngine.UI.UILoadingBar+OnChangeEvent, Assembly-CSharp, Version=2.0.0.668,
+      Culture=neutral, PublicKeyToken=null
 --- !u!114 &11484164
 MonoBehaviour:
   m_ObjectHideFlags: 1
